@@ -59,7 +59,7 @@ def normalize_data(x):
     
 
 
-def linear_regression(x, t, basis, reg_lambda=0, degree=0):
+def linear_regression(x, t, basis, reg_lambda, degree ):
     """Perform linear regression on a training set with specified regularizer lambda and basis
 
     Args:
@@ -78,20 +78,20 @@ def linear_regression(x, t, basis, reg_lambda=0, degree=0):
     # e.g. phi = design_matrix(x,basis, degree)
 
     # TO DO:: Compute coefficients using phi matrix
+
     phi = design_matrix(x,basis,degree)
     # Co_efficient/w = Inverse(phi-transpose * phi) * phi-transpose * t-train
     # Multiply the transpose of phi matrix with phi to get a squared matrix and then inverse it
     phi_inv = np.linalg.inv(np.transpose(phi) * phi)
     w = phi_inv * (np.transpose(phi) * t)
     y_train = np.transpose(w) * np.transpose(phi)
-
     # Measure root mean squared error on training data.
     train_err = np.transpose(y_train) - np.transpose(t)
     rms_error = np.sqrt(np.mean(np.square(train_err)))
 
     return (w, rms_error)
 
-def design_matrix(x, basis, degree=0):
+def design_matrix(x, basis, degree):
     """ Compute a design matrix Phi from given input datapoints and basis.
 	Args:
       x matrix of input datapoints
@@ -106,8 +106,10 @@ def design_matrix(x, basis, degree=0):
         phi = np.ones(x.shape[0], dtype=int)
         phi = np.reshape(phi, (x.shape[0], 1))
         for i in range(1, degree + 1):
-            temp = np.apply_along_axis(np.power, 0, x, i)
-            phi = np.concatenate((phi, temp), 1)
+            x_matrix = np.apply_along_axis(np.power, 0, x, i)
+            if x_matrix.shape[0] == 1 :
+                x_matrix = np.reshape(x_matrix,(x.shape[0], 1))
+            phi = np.concatenate((phi, x_matrix), 1)
 
     elif basis == 'ReLU':
         phi = None
@@ -131,7 +133,7 @@ def evaluate_regression(x, t, w, basis, degree):
       err RMS error on the input dataset 
       """
   	# TO DO:: Compute t_est and err
-
+    print("Evaluate regression")
     phi_theta = design_matrix(x,basis,degree)
     y_test = np.transpose(w) * np.transpose(phi_theta)
     t_est = np.transpose(y_test) - np.transpose(t)
