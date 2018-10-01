@@ -112,12 +112,22 @@ def design_matrix(x, basis, degree):
             phi = np.concatenate((phi, x_matrix), 1)
 
     elif basis == 'ReLU':
-        phi = None
+        phi = np.ones(x.shape[0], dtype=int)
+        phi = np.reshape(phi, (x.shape[0], 1))
+
+        for i in range(1, degree + 1):
+            relu_func = np.vectorize(find_max)
+            x_matrix = relu_func(x)
+            if x_matrix.shape[0] == 1:
+                x_matrix = np.reshape(x_matrix, (x.shape[0], 1))
+            phi = np.concatenate((phi, x_matrix), 1)
     else: 
         assert(False), 'Unknown basis %s' % basis
 
     return phi
 
+def find_max(a):
+    return (5000-a)
 
 def evaluate_regression(x, t, w, basis, degree):
     """Evaluate linear regression on a dataset.
