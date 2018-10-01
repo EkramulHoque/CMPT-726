@@ -118,9 +118,11 @@ def design_matrix(x, basis, degree):
         for i in range(1, degree + 1):
             relu_func = np.vectorize(find_max)
             x_matrix = relu_func(x)
-            if x_matrix.shape[0] == 1:
-                x_matrix = np.reshape(x_matrix, (x.shape[0], 1))
+            #print(x_matrix)
+            # if x_matrix.shape[0] == 1:
+            #     x_matrix = np.reshape(x_matrix, (x.shape[0], 1))
             phi = np.concatenate((phi, x_matrix), 1)
+            #print(phi)
     else: 
         assert(False), 'Unknown basis %s' % basis
 
