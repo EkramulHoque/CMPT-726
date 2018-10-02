@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 targets = values[:,1]
 x = values[:,7:]
 x = a1.normalize_data(x)
+
+N_TRAIN=100
+x = x[0:N_TRAIN,:]
+targets = targets[0:N_TRAIN]
+
 test_arr = dict()
 def cross_validation(lamb,degree):
     chunk = 10
@@ -35,7 +40,7 @@ def cross_validation(lamb,degree):
     test_arr[lamb] = test_err/10
 
 
-cross_validation(0.000001,2) #replace lambda=0 with lambda=10^-5 for plotting purpose.
+cross_validation(0,2) #replace lambda=0 with lambda=10^-5 for plotting purpose.
 cross_validation(0.01,2)
 cross_validation(0.1,2)
 cross_validation(1,2)

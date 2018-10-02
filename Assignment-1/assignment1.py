@@ -82,11 +82,10 @@ def linear_regression(x, t, basis, reg_lambda, degree ):
     phi = design_matrix(x,basis,degree)
     # Co_efficient/w = Inverse(phi-transpose * phi) * phi-transpose * t-train
     # Multiply the transpose of phi matrix with phi to get a squared matrix and then inverse it
-    phi_inv = np.linalg.inv(np.transpose(phi) * phi)
-    w = phi_inv * (np.transpose(phi) * t)
+    w = np.linalg.pinv(phi) * t
     y_train = np.transpose(w) * np.transpose(phi)
     # Measure root mean squared error on training data.
-    train_err = np.transpose(y_train) - np.transpose(t)
+    train_err = t - np.transpose(y_train)
     rms_error = np.sqrt(np.mean(np.square(train_err)))
 
     return (w, rms_error)
@@ -101,35 +100,29 @@ def design_matrix(x, basis, degree):
       phi design matrix
     """
     # TO DO:: Compute desing matrix for each of the basis functions
-
     if basis == 'polynomial':
         phi = np.ones(x.shape[0], dtype=int)
         phi = np.reshape(phi, (x.shape[0], 1))
-        for i in range(1, degree + 1):
-            x_matrix = np.apply_along_axis(np.power, 0, x, i)
-            if x_matrix.shape[0] == 1 :
-                x_matrix = np.reshape(x_matrix,(x.shape[0], 1))
-            phi = np.concatenate((phi, x_matrix), 1)
 
+        for i in range(1, degree + 1):
+            x_matrix =np.apply_along_axis(np.power,0,x,i)
+            # if x_matrix.shape[0] == 1:
+            #      x_matrix = np.reshape(x_matrix , (x.shape[0], 1))
+
+            phi = np.concatenate((phi, x_matrix), 1)
     elif basis == 'ReLU':
         phi = np.ones(x.shape[0], dtype=int)
         phi = np.reshape(phi, (x.shape[0], 1))
-
-        for i in range(1, degree + 1):
-            relu_func = np.vectorize(find_max)
-            x_matrix = relu_func(x)
-            #print(x_matrix)
-            # if x_matrix.shape[0] == 1:
-            #     x_matrix = np.reshape(x_matrix, (x.shape[0], 1))
-            phi = np.concatenate((phi, x_matrix), 1)
-            #print(phi)
+        phi = np.concatenate((phi, np.vectorize(find_max)(x)), 1)
+        print(phi)
     else: 
         assert(False), 'Unknown basis %s' % basis
 
     return phi
 
 def find_max(a):
-    return (5000-a)
+    result = max(0,5000-a)
+    return result
 
 def evaluate_regression(x, t, w, basis, degree):
     """Evaluate linear regression on a dataset.
@@ -145,10 +138,9 @@ def evaluate_regression(x, t, w, basis, degree):
       err RMS error on the input dataset 
       """
   	# TO DO:: Compute t_est and err
-    print("Evaluate regression")
+   # print("Evaluate regression")
     phi_theta = design_matrix(x,basis,degree)
     y_test = np.transpose(w) * np.transpose(phi_theta)
-    t_est = np.transpose(y_test) - np.transpose(t)
+    t_est = t - np.transpose(y_test)
     err = np.sqrt(np.mean(np.square(t_est)))
-    #print(err)
     return (t_est, err)

@@ -3,7 +3,7 @@
 import assignment1 as a1
 import numpy as np
 import matplotlib.pyplot as plt
-
+import sys
 (countries, features, values) = a1.load_unicef_data()
 
 targets = values[:,1]
@@ -37,8 +37,8 @@ plt.ylabel('RMS')
 plt.legend(['Training error','Test error'])
 plt.title('Fit with polynomials, no regularization')
 plt.xlabel('Polynomial degree')
-#plt.show()
-
+plt.show()
+#sys.exit(0)
 ####################Normalization########################################
 print("Normalization")
 x_norm = a1.normalize_data(x)
@@ -58,8 +58,8 @@ degree = 6
 for i in range(1, degree + 1):
     (w, tr_err) = a1.linear_regression(x_train,t_train,'polynomial',0,i)
     (t_est, te_err) = a1.evaluate_regression(x_test, t_test, w, 'polynomial', i)
-    train_err[i] = tr_err
-    test_err[i] = te_err
+    train_err[i] = float(tr_err)
+    test_err[i] = float(te_err)
 
 
 # Produce a plot of results.
@@ -69,4 +69,4 @@ plt.ylabel('RMS')
 plt.legend(['Training error','Test error'])
 plt.title('Fit with polynomials, Normalizing')
 plt.xlabel('Polynomial degree')
-#plt.show()
+plt.show()
