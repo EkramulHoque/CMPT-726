@@ -38,6 +38,7 @@ def cross_validation(lamb,degree):
 
         test_err += rms_test_error
     test_arr[lamb] = test_err/10
+    print(test_arr)
 
 
 cross_validation(0,2) #replace lambda=0 with lambda=10^-5 for plotting purpose.

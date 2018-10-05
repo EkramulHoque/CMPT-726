@@ -114,7 +114,7 @@ def design_matrix(x, basis, degree):
         phi = np.ones(x.shape[0], dtype=int)
         phi = np.reshape(phi, (x.shape[0], 1))
         phi = np.concatenate((phi, np.vectorize(find_max)(x)), 1)
-        print(phi)
+
     else: 
         assert(False), 'Unknown basis %s' % basis
 
