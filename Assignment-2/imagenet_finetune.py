@@ -1,4 +1,3 @@
-import sklearn as sklearn
 import torch
 import torchvision
 import torchvision.models as models
@@ -8,20 +7,15 @@ import torchvision.transforms as transforms
 import torch.optim as optim
 import html_output as html
 import numpy as np
-from torch.utils.data import Sampler, SubsetRandomSampler, TensorDataset
-import matplotlib.pyplot as plt
+from torch.utils.data import Sampler, SubsetRandomSampler
 
-NUM_EPOCH = 5
-valid_size = .2
+NUM_EPOCH = 2
+valid_size = .1
 random_seed = 0
-divide_data = 10
+divide_data = 100
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-def imshow(img):
-    img = img / 2 + 0.5     # unnormalize
-    npimg = img.numpy()
-    plt.imshow(np.transpose(npimg, (1, 2, 0)))
 
 class ResNet50_CIFAR(nn.Module):
     def __init__(self):
@@ -54,35 +48,42 @@ def train():
                                                          (0.5, 0.5, 0.5))])
 
     trainset = datasets.CIFAR10('./data', download=True, transform=transform)
+    test_set = datasets.CIFAR10('./data', download=True, transform=transform)
     train_idx,test_idx=sampler(trainset, shuffle=True)
     print(' Number of training data: '+str(len(train_idx)),' Number of test data: '+str(len(test_idx)))
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                               sampler=SubsetRandomSampler(train_idx), shuffle=False, num_workers=1, pin_memory= True)
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=4,
+                                              sampler=SubsetRandomSampler(test_idx), shuffle=False, num_workers=1,
+                                              pin_memory=True)
     # trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
     #                                         shuffle=False, num_workers=1,
     #                                           pin_memory=True)
-    data_iter = iter(trainloader)
-    images, labels = data_iter.next()
-    imshow(torchvision.utils.make_grid(images))
-    print('Train Image :',' '.join('%5s' % classes[labels[j]] for j in range(4)))
-
     ## Create model, objective function and optimizer
     model = ResNet50_CIFAR()
-    model.to(device)
+    if torch.cuda.is_available():
+        model.to(device)
+
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(list(model.fc1.parameters()) + list(model.fc2.parameters()),
                            lr=0.001, momentum=0.9)
     ## Do the training
+    precision_list = []
     for epoch in range(NUM_EPOCH):  # loop over the dataset multiple times
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
             # get the inputs
             inputs, labels = data
+            #print('Train Image :', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
             # zero the parameter gradients
             optimizer.zero_grad()
             # forward + backward + optimize
-            outputs = model(inputs.to(device))
-            loss = criterion(outputs, labels.to(device))
+            if torch.cuda.is_available():
+                outputs = model(inputs.to(device))
+                loss = criterion(outputs, labels.to(device))
+            else:
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
@@ -90,46 +91,35 @@ def train():
                 print('[%d, %5d] loss: %.3f' %
                     (epoch + 1, i + 1, running_loss / 20))
                 running_loss = 0.0
+        test_image, predicted_list, probability, correct, total ,precision= test(model, test_loader)
+        precision_list.append(precision)
     print('Finished Training')
-    return model,test_idx
-
-def test(model,test_idx):
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    transform = transforms.Compose([transforms.Resize(224),
-                                    transforms.ToTensor(),
-                                    transforms.Normalize((0.5, 0.5, 0.5),
-                                                         (0.5, 0.5, 0.5))])
-
-    test_set = datasets.CIFAR10('./data', download=True, transform=transform)
-    test_loader = torch.utils.data.DataLoader(test_set, batch_size=4,
-                                              sampler=SubsetRandomSampler(test_idx), shuffle=False, num_workers=1,
-                                              pin_memory=True)
-    data_iter = iter(test_loader)
-    images, labels = data_iter.next()
-    imshow(torchvision.utils.make_grid(images))
-    print('Test Image :',' '.join('%5s' % classes[labels[j]] for j in range(4)))
-    images, labels = images.to(device), labels.to(device)
-    model.cuda()
-    outputs = model(images)
-
-    _, predicted = torch.max(outputs, 1)
-    print('Predicted: ', ' '.join('%5s' % classes[predicted[j]] for j in range(4)))
-    web = html.generate_html(labels,predicted,outputs)
+    web = html.generate_html(test_image, predicted_list, probability, len(train_idx), correct, total,precision_list)
     html.write_lines(web, "predict_table.html")
 
+def test(model,test_loader):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     correct = 0
     total = 0
+    predicted_list = []
+    test_image = []
+    probability = []
     with torch.no_grad():
         for data in test_loader:
             images, labels = data
-            images, labels = images.to(device), labels.to(device)
+            if torch.cuda.is_available():
+                images, labels = images.to(device), labels.to(device)
+           #print('Test Images: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
             outputs = model(images)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
-
-    print('Accuracy of the network : %d %%' % (
-            100 * correct / total))
+            predicted_list.append(predicted)
+            test_image.append(labels)
+            probability.append(outputs.data)
+            precision = 100 * correct / total
+    print('Accuracy of the network : %d %%' % (precision))
+    return test_image, predicted_list, probability, correct, total, precision
 
 
 def sampler(dataset,shuffle):
@@ -144,5 +134,5 @@ def sampler(dataset,shuffle):
 
 
 if __name__ == '__main__':
-    output,test_idx = train()
-    test(output,test_idx)
+    train()
+

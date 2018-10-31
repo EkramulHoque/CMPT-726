@@ -1,0 +1,8 @@
+name: cmpt419-pytorch-python36
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.6.6
+  - pytorch=0.4.1
+  - torchvision=0.2.1

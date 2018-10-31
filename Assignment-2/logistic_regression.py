@@ -67,13 +67,13 @@ for iter in range (0,max_iter):
   w_old = w
   w = w - eta*grad_e
   
-  # Plot current separator and data.  Useful for interactive mode / debugging.
-  # plt.figure(DATA_FIG)
-  # plt.clf()
-  # plt.plot(X1[:,0],X1[:,1],'b.')
-  # plt.plot(X2[:,0],X2[:,1],'g.')
-  # a2.draw_sep(w)
-  # plt.axis([-5, 15, -10, 10])
+  #Plot current separator and data.  Useful for interactive mode / debugging.
+  plt.figure(DATA_FIG)
+  plt.clf()
+  plt.plot(X1[:,0],X1[:,1],'b.')
+  plt.plot(X2[:,0],X2[:,1],'g.')
+  a2.draw_sep(w)
+  plt.axis([-5, 15, -10, 10])
 
   
   # Add next step of separator in m-b space.
